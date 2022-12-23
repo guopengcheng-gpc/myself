@@ -1,0 +1,515 @@
+<%include("common/top.html",{title:'数据转换'}){}%>
+<style>
+    .colorColumn{
+        background-color: #449d44;
+    }
+</style>
+<script>
+    var id = "${id}";
+</script>
+    <div style="margin-top: 10px">
+        <div  style="text-align: center;float: left;width: 50%">
+            <form class="form-horizontal" role="form">
+                <h5>源数据库</h5>
+                <div class="form-group">
+                    <label for="yuanSql" class="col-sm-4 control-label">driverClassName</label>
+                    <div class="col-sm-8">
+                        <select id="yuanSql" class="form-control" style="width: 150px">
+                            <option value="com.mysql.cj.jdbc.Driver">mysql</option>
+                            <option value="net.sourceforge.jtds.jdbc.Driver">sql server</option>
+                            <option value="oracle.jdbc.driver.OracleDriver">oracle</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="dataBase1" class="col-sm-4 control-label">url</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="dataBase1" value="jdbc:mysql://localhost:3306/******?useUnicode=true&characterEncoding=utf-8&autoReconnect=true&&useSSL=true&useOldAliasMetadataBehavior=true">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="userName1" class="col-sm-4 control-label">userName</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="userName1" style="width: 200px">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password1" class="col-sm-4 control-label">password</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" id="password1" style="width: 200px">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="button" onclick="testSql(1)" class="btn btn-default">连接测试</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tableName1" class="col-sm-4 control-label">数据库表名</label>
+                    <div class="col-sm-8">
+                        <select id="tableName1" onchange="changeTable(this)" class="form-control" style="width: 200px">
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div style="text-align: center;float: right;width: 50%">
+            <form class="form-horizontal" role="form">
+                <h5>目标数据库</h5>
+                <div class="form-group">
+                    <label for="targetSql" class="col-sm-4 control-label">driverClassName</label>
+                    <div class="col-sm-8">
+                        <select id="targetSql" class="form-control" style="width: 150px">
+                            <option value="com.mysql.cj.jdbc.Driver">mysql</option>
+                            <option value="net.sourceforge.jtds.jdbc.Driver">sql server</option>
+                            <option value="oracle.jdbc.driver.OracleDriver">oracle</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="dataBase2" class="col-sm-4 control-label">url</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="dataBase2" value="jdbc:mysql://localhost:3306/******?useUnicode=true&characterEncoding=utf-8&autoReconnect=true&&useSSL=true&useOldAliasMetadataBehavior=true">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="userName2" class="col-sm-4 control-label">userName</label>
+                    <div class="col-sm-8">
+                        <input type="text" class="form-control" id="userName2" style="width: 200px">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password2" class="col-sm-4 control-label">password</label>
+                    <div class="col-sm-8">
+                        <input type="password" class="form-control" id="password2" style="width: 200px">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <button type="button" onclick="testSql(2)" class="btn btn-default">连接测试</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tableName2" class="col-sm-4 control-label">数据库表名</label>
+                    <div class="col-sm-8">
+                        <select id="tableName2" class="form-control" style="width: 200px">
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+<div>
+    <div style="float: left;width: 45%">
+        <textarea class="form-control" id="yuanShowSql" style="margin-left: 20px;height: 500px;"></textarea>
+    </div>
+    <div style="float: right;width: 53%;text-align: center">
+        <button id="mate" onclick="mateTable();" class="btn">匹配字段</button>
+        <button id="start" onclick="startMate();" class="btn">开始执行</button>
+        <button id="clear" onclick="clearVal();" class="btn">清除控制台内容</button>
+        <p class="form-control" id="showValue" style="margin-right:20px;margin-top:10px;height: 300px;text-align: left;overflow:auto"></p>
+    </div>
+</div>
+
+<div class="modal fade" id="mateModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog" style="width: 1000px">
+        <div class="modal-content" style="width: 1000px">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">匹配迁移字段</h4>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="columnHide1">
+                <input type="hidden" id="columnHide2">
+                <input type="hidden" id="columnHideAll">
+                <div class="row">
+                    <div class="col-lg-4" id="tableColumn1" style="height: 350px;overflow:auto;">
+
+                    </div>
+                    <div class="col-lg-4" style="height: 350px;overflow:auto;text-align: center">
+                        <label>条件</label>
+                        <div class="row">
+                            <select id="condition1" class="col-sm-5"></select>
+                            <span class="col-sm-2">=</span>
+                            <select id="condition2" class="col-sm-5"></select>
+                        </div>
+                        <div class="row">
+                            <button class="btn col-sm-4 btn-primary" onclick="mateAllColumn();">自动匹配</button>
+                            <button class="btn col-sm-4 btn-success" onclick="addColumn();">添加</button>
+                            <button class="btn col-sm-4 btn-danger" onclick="deleteColumn();">删除</button>
+                        </div>
+                        <div id="tableColumnAll" style="text-align: left">
+                            
+                        </div>
+                    </div>
+                    <div class="col-lg-4" id="tableColumn2" style="height: 350px;overflow:auto;">
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="text-align: center">
+                <button type="button" class="btn btn-default" data-dismiss="modal">确定</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+
+
+
+<script type="application/javascript">
+    var setTime;
+    $("#yuanSql").change(function () {
+        var yuan = $(this).val();
+        if (yuan == "com.mysql.cj.jdbc.Driver"){
+            $("#dataBase1").val("jdbc:mysql://localhost:3306/******?useUnicode=true&characterEncoding=utf-8&autoReconnect=true&&useSSL=true&useOldAliasMetadataBehavior=true");
+        } else if(yuan == "net.sourceforge.jtds.jdbc.Driver"){
+            $("#dataBase1").val("jdbc:jtds:sqlserver://localhost:1433/******");
+        }else if(yuan == "oracle.jdbc.driver.OracleDriver"){
+            $("#dataBase1").val("jdbc:oracle:thin:@localhost:1521:orcl");
+        }
+    });
+    $("#targetSql").change(function () {
+        var yuan = $(this).val();
+        if (yuan == "com.mysql.cj.jdbc.Driver"){
+            $("#dataBase2").val("jdbc:mysql://localhost:3306/******?useUnicode=true&characterEncoding=utf-8&autoReconnect=true&&useSSL=true&useOldAliasMetadataBehavior=true");
+        } else if(yuan == "net.sourceforge.jtds.jdbc.Driver"){
+            $("#dataBase2").val("jdbc:jtds:sqlserver://localhost:1433/******");
+        }else if(yuan == "oracle.jdbc.driver.OracleDriver"){
+            $("#dataBase2").val("jdbc:oracle:thin:@localhost:1521:orcl");
+        }
+    });
+    function testSql(even) {
+        var driverClassName;
+        var url;
+        var userName;
+        var password;
+        if(even == "1"){
+            driverClassName = $("#yuanSql").val();
+            url = $("#dataBase1").val();
+            userName = $("#userName1").val();
+            password = $("#password1").val();
+        }else if (even == "2"){
+            driverClassName = $("#targetSql").val();
+            url = $("#dataBase2").val();
+            userName = $("#userName2").val();
+            password = $("#password2").val();
+        }
+        if (driverClassName == "" || url == ""|| userName == ""||password == ""){
+            alert("请填写完整数据库信息");
+            return false;
+        }
+        $.ajax({
+            url:"/getTable",
+            type:"POST",
+            data:{driverClassName:driverClassName,url:url,userName:userName,password:password,id:id,num:even},
+            dataType:"json",
+            success:function (data) {
+                var msg = data.msg;
+                if (msg == "success") {
+                    var html = "<option></option>";
+                    var tableName = data.tableNames;
+                    $.each(tableName,function (i,even) {
+                        html += "<option value='"+even+"'>"+even+"</option>";
+                    })
+                    if(even == "1"){
+                        $("#tableName1").html(html);
+                    }else if (even == "2"){
+                        $("#tableName2").html(html);
+                    }
+                    alert("连接成功");
+                }else{
+                    alert(msg.substring(7));
+                }
+            },error:function () {
+                alert("连接测试失败")
+            }
+        });
+    }
+    function changeTable(even) {
+        var table = $(even).val();
+        $.ajax({
+            url: "/getTableName",
+            type: "POST",
+            data: {
+                table:table,
+                id: id
+            },
+            dataType: "json",
+            success: function (data) {
+                var msg = data.msg;
+                if (msg == "success") {
+                    var html = "SELECT \n";
+                    var tableName = data.tableNames;
+                    $.each(tableName,function (i,even) {
+                        html += "\t"+even +",\n";
+                    });
+                    html = html.substring(0,html.length-2)+"\n";
+                    html += "FROM  "+table;
+                    $("#yuanShowSql").val(html);
+                }else{
+                    alert(msg.substring(7));
+                }
+            }, error: function () {
+                alert("获取字段失败");
+            }
+        });
+    }
+
+    function mateTable() {
+        var sql = $("#yuanShowSql").val();
+        var tableName2 = $("#tableName2").val();
+        var len = $("#tableColumnAll").children().length;
+        if (sql ==""){
+            alert("请输入查询SQL");
+            return false;
+        }
+        if (tableName2 ==""){
+            alert("请选择要迁移结果表");
+            return false;
+        }
+        if (len > 0){
+            var flag = confirm("是否刷新字段");
+            if (flag){
+                updateColumn(sql,tableName2);
+            }else{
+                $("#mateModal").modal("show");
+            }
+        } else{
+            updateColumn(sql,tableName2);
+        }
+
+    }
+
+    function updateColumn(sql,tableName2) {
+        $.ajax({
+            url: "/getTableColumnName",
+            type: "POST",
+            data: {
+                sql:sql,
+                tableName2:tableName2,
+                id: id
+            },
+            dataType: "json",
+            success: function (data) {
+                var msg = data.msg;
+                if (msg != "success"){
+                    alert(msg);
+                } else{
+                    var tableColumn1 = data.tableColumn1;
+                    var tableColumn2 = data.tableColumn2;
+                    var html1 = "";
+                    var html2 = "";
+                    $("#condition1").html("");
+                    $.each(tableColumn1,function (i,even) {
+                        html1 += "<tr id='column1"+i+"' class='colCol1' onclick='clickColumn1(this)'><td>"+even+"</td></tr>";
+                        $("#condition1").append("<option value='"+even+"'>"+even+"</option>");
+                    });
+                    $("#condition2").html("");
+                    $.each(tableColumn2,function (i,even) {
+                        html2 += "<tr id='column2"+i+"' class='colCol2' onclick='clickColumn2(this)'><td>"+even+"</td></tr>";
+                        $("#condition2").append("<option value='"+even+"'>"+even+"</option>");
+                    });
+                    $("#tableColumnAll").html("");
+                    $("#tableColumn1").html("");
+                    $("#tableColumn2").html("");
+                    $("#tableColumn1").append(html1);
+                    $("#tableColumn2").append(html2);
+                    $("#mateModal").modal("show");
+                }
+            }, error: function () {
+                alert("获取字段失败");
+            }
+        });
+    }
+
+    function clickColumn1(even) {
+        var columnHide1 = $("#columnHide1").val();
+        var colValue = $(even).attr("id");
+        if (colValue == columnHide1) {
+            $("#columnHide1").val("");
+            $(even).removeClass("colorColumn");
+        }else{
+            $("#columnHide1").val(colValue);
+            $(".colCol1").removeClass("colorColumn");
+            $(even).addClass("colorColumn");
+        }
+    }
+    function clickColumn2(even) {
+        var columnHide2 = $("#columnHide2").val();
+        var colValue = $(even).attr("id");
+        if (colValue == columnHide2) {
+            $("#columnHide2").val("");
+            $(even).removeClass("colorColumn");
+        }else{
+            $("#columnHide2").val(colValue);
+            $(".colCol2").removeClass("colorColumn");
+            $(even).addClass("colorColumn");
+        }
+    }
+    
+    function mateAllColumn() {
+        var len = $("#tableColumnAll").children().length;
+        var lenValAll = "";
+        if (len == 0){
+            lenValAll = 0;
+        } else{
+            lenValAll = $($("#tableColumnAll").children()[len-1]).children().attr("id");
+            lenValAll = parseInt(lenValAll.substring(lenValAll.indexOf("colAll")+6,lenValAll.length))+1;
+        }
+        $.each($("#tableColumn1").children("tr"),function (i,even) {
+            $.each($("#tableColumn2").children("tr"),function (j,even1) {
+                var colum1Text = $(even.children).text().split("(")[0];
+                var colum2Text = $(even1.children).text().split("(")[0];
+                if (colum1Text.toLowerCase() == colum2Text.toLowerCase()) {
+                    $("#tableColumnAll").append("<tr><td id='colAll"+lenValAll+"' name='columnValue' onclick='columnAll(this)'>"+$(even.children).text()+"="+$(even1.children).text()+"</td></tr>");
+                    lenValAll = parseInt(lenValAll)+ 1;
+                    $(even).remove();
+                    $(even1).remove();
+                }
+            });
+        });
+    }
+
+    function columnAll(even) {
+        var columnHideAll = $("#columnHideAll").val();
+        var colValue = $(even).attr("id");
+        if (columnHideAll == colValue) {
+            $("#columnHideAll").val("");
+            $(even).removeClass("colorColumn");
+        }else{
+            $("#columnHideAll").val(colValue);
+            $("td[name='columnValue']").removeClass("colorColumn");
+            $(even).addClass("colorColumn");
+        }
+    }
+
+    function deleteColumn() {
+        var columnHideAll = $("#columnHideAll").val();
+        if (columnHideAll != null && columnHideAll != ""){
+            var columId = "#"+ columnHideAll;
+            var columCalue = $(columId).text();
+            var len1 = $("#tableColumn1").children().length;
+            var lenVal1 = 0;
+            if (len1>0){
+                lenVal1 = $($("#tableColumn1").children()[len1-1]).attr("id");
+            }
+            lenVal1 = parseInt(lenVal1.substring(lenVal1.indexOf("column1")+7,lenVal1.length))+1;
+            $("#tableColumn1").append("<tr id='column1"+lenVal1+"' class='colCol1' onclick='clickColumn1(this)'><td>"+columCalue.split("=")[0]+"</td></tr>");
+            var len2 = $("#tableColumn2").children().length;
+            var lenVal2 = 0;
+            if (len2>0){
+                lenVal2 = $($("#tableColumn2").children()[len2-1]).attr("id");
+            }
+            lenVal2 = parseInt(lenVal2.substring(lenVal2.indexOf("column2")+7,lenVal2.length))+1;
+            $("#tableColumn2").append("<tr id='column2"+lenVal2+"' class='colCol2' onclick='clickColumn2(this)'><td>"+columCalue.split("=")[1]+"</td></tr>");
+            $(columId).parent().remove();
+        }
+    }
+
+    function addColumn() {
+        var columnHide1 = $("#columnHide1").val();
+        var columnHide2 = $("#columnHide2").val();
+        if (columnHide1 != null && columnHide1 != "" && columnHide2 != null && columnHide2 != "") {
+            var len = $("#tableColumnAll").children().length;
+            var lenValAll ="";
+            if (len == 0){
+                lenValAll = 0;
+            } else{
+                lenValAll = $($("#tableColumnAll").children()[len-1]).children().attr("id");
+                lenValAll = parseInt(lenValAll.substring(lenValAll.indexOf("colAll")+6,lenValAll.length))+1;
+            }
+            var columId1 = "#"+ columnHide1;
+            var columId2 = "#"+ columnHide2;
+            $("#tableColumnAll").append("<tr><td id='colAll"+lenValAll+"' name='columnValue' onclick='columnAll(this)'>"+$(columId1).children().text()+"="+$(columId2).children().text()+"</td></tr>");
+            $("#columnHide1").val("");
+            $("#columnHide2").val("");
+            $(columId1).remove();
+            $(columId2).remove();
+        }
+    }
+    function startMate() {
+        $("button").attr("disabled",true);
+        if ($("#condition1").val() == "" || $("#condition2").val() == "" || $("#tableColumnAll").children()<1 || $("#yuanShowSql").val() == "" || $("#tableName2").val() == ""){
+            alert("请填写完整数据");
+        }
+        var condition = $("#condition1").val().split("(")[0] + "=" + $("#condition2").val().split("(")[0];
+        var conditionVal = [];
+        $.each($("#tableColumnAll").children(),function (i,even) {
+            var columVal = $(even).children().text();
+            conditionVal.push(columVal.split("=")[0].split("(")[0] +"=" + columVal.split("=")[1].split("(")[0]);
+        });
+        var msg = {
+            id:id,
+            sql:$("#yuanShowSql").val(),
+            tableName:$("#tableName2").val(),
+            condition:condition,
+            conditionVal:conditionVal
+        };
+        var webSocket;
+        if ("WebSocket" in window){
+            webSocket = new WebSocket("ws://127.0.0.1:8081/webSocket/"+id);
+        }else {
+            alert("该浏览器不支持websocket");
+        }
+        webSocket.onopen = function (event) {
+            console.log("websocket连接成功");
+            setTime = setInterval(function () {
+                webSocket.send(id+":发送一次心跳");
+            },30000);
+            webSocket.send(JSON.stringify(msg));
+        };
+
+        webSocket.onclose = function (event) {
+            if (setTime != null){
+                clearInterval(setTime);
+            }
+            console.log("websocket连接关闭");
+        };
+        webSocket.onmessage = function (event) {
+            //console.log(event.data);
+            if (event.data == "处理一次心跳") {
+                console.log(event);
+            }else{
+                var result = jQuery.parseJSON(event.data);
+                if (result.code == 2){//停止
+                    var msg = result.message;
+                    if(msg == "迁移结束"){
+                        $("#showValue").append("<p style='color: #4cae4c'>["+nowDate()+"]"+msg+"</p>");
+                    }else {
+                        $("#showValue").append("<p style='color: #761c19'>["+nowDate()+"]"+msg+"</p>");
+                    }
+                    if (setTime != null){
+                        clearInterval(setTime);
+                    }
+                    webSocket.close();
+                    $("button").attr("disabled",false);
+                }else{
+                    if (result.messageType == 1){//直接发送
+                        var msg = result.message;
+                        $("#showValue").append("<p style='color: #4cae4c'>["+nowDate()+"]"+msg+"</p>");
+                    } else{
+                        var msg = result.message;
+                        if (msg.split(":")[0] == "insert"){
+                            $("#insertData").text(msg.split(":")[1]);
+                        } else if (msg.split(":")[0] == "update"){
+                            $("#updateData").text(msg.split(":")[1]);
+                        }else if (msg.split(":")[0] == "select"){
+                            $("#selectDate").text(msg.split(":")[1]);
+                        }
+                    }
+                }
+            }
+        };
+        webSocket.onerror = function (event) {
+            webSocket.close();
+            console.log("websocket发生错误");
+        };
+        window.onbeforeunload = function () {
+            webSocket.close();
+        };
+    }
+
+    function clearVal() {
+        $("#showValue").html("");
+    }
+</script>
